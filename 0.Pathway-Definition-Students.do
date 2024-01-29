@@ -6,7 +6,8 @@
 		
 		
 		This file helps you define and load the pathways
-		your students (as reported in the PDP) are in.
+		your students (as reported in the PDP) are in on a
+		term by term basis.
 		
 *******************************************************************************/
 
@@ -59,11 +60,13 @@ unique StudentID
 	*/
 	
 * Add the pathway variable information
-gen PathwayID = ""
-gen PathwayName = ""
+gen ProgramofStudyYear1 = ""
+gen ProgramofStudyYear2 = ""
+gen ProgramofStudyYear3 = ""
+gen ProgramofStudyYear4 = ""
 
 * Export student list
-export excel "$root/2_data-toolkit/Student_Pathways_Template.xlsx", firstrow(var)
+export excel "$root/2_data-toolkit/Student_Pathways_Template.xlsx", firstrow(var) replace
 
 
 *	==========================================
@@ -73,32 +76,3 @@ export excel "$root/2_data-toolkit/Student_Pathways_Template.xlsx", firstrow(var
 /* Insert instructions on how to open the Excel file we generated 
 	and fill the student pathway information. */
 
-
-*	==========================================
-*	PART 4. - Add the Student Pathway Information to the AR Cohort file
-*	==========================================
-
-import excel "$root/2_data-toolkit/Student_Pathways_Template_Filled.xlsx", firstrow clear
-
-	/* Option to give some diagnostics on pathway info at this stage. */
-	
-preserve 
-	import excel "$root/1_data-pdp/AR-file_cohort.xlsx", firstrow clear
-	
-	tempfile arcohort
-	save `arcohort'
-restore
-	
-merge 1:m StudentID using `arcohort', nogen
-	
-
-/* Note
-
-	This dofile could be converted into an .ado file whereby the person
-	just downloads a new Stata command, specifies the name/filepath
-	for their AR file, for their filled template file, and generates it
-	
-	More or less scalable depending on how clean we think the StudentID
-	data is
-	
-*/

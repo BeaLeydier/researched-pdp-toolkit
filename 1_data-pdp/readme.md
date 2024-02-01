@@ -1,0 +1,1 @@
+In this folder, add your Analysis Ready files from the PDP.

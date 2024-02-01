@@ -58,8 +58,8 @@ rename destination_ value
 * sankey diagram 
 
 sankey value, from(source) to(destpathway) by(year)
-
-
+graph export "4_output/sankey-test.png", as(png) replace
+ 
 
 /* archives
 

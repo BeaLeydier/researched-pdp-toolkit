@@ -41,6 +41,7 @@ use "2_data-toolkit/cohort-AR-transformed.dta", clear
 	* Chart: pathway unadjusted margins
 	margins, predict(outcome(1)) over(pathway_y1)
 	marginsplot, noci recast(bar) plotopts(color(%70) barw(.6))
+	graph export "4_output/margins-test.png", as(png) replace
 	
 	/*
 	{

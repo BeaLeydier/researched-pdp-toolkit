@@ -38,7 +38,10 @@ global first "false"
 *		Analysis ready COHORT file
 *	==========================================
 
-import excel "$root/1_data-pdp/AR-file_cohort.xlsx", firstrow clear
+import excel "$root/1_data-pdp/cohort_analysis_ready_file_template_4-7-23.xlsx", firstrow clear
+
+* Remove records without a StudentID
+drop if StudentID == .
 
 *	==========================================
 *	PART 3.1 - Clean PDP data 
@@ -145,14 +148,25 @@ tab Race race, m
 	
 *** Parents Education Level 
 
+	/* Note : We first need to count the missing observations because 
+		a variable that contains only all-missing values will be imported
+		as numeric by Stata, even if it would be string if there were some
+		non-missing observations. Thus for the code to be robust to both
+		cases where all values are missing and some values are non-missing, we
+		need to differentiate between these two cases.
+	*/
+
 * Create a categorical variable
 gen parents_postsecondaryed = . 
-replace parents_postsecondaryed = 0 if strpos(FirstGen, "N")>0
-replace parents_postsecondaryed = 1 if strpos(FirstGen, "P")>0
-replace parents_postsecondaryed = 2 if strpos(FirstGen, "C")>0
-replace parents_postsecondaryed = 3 if strpos(FirstGen, "A")>0
-replace parents_postsecondaryed = 4 if strpos(FirstGen, "B")>0
 
+count if missing(FirstGen)
+if r(N) < _N { //we only fill values if there is at least one non missing obs in FirstGen
+	replace parents_postsecondaryed = 0 if strpos(FirstGen, "N")>0
+	replace parents_postsecondaryed = 1 if strpos(FirstGen, "P")>0
+	replace parents_postsecondaryed = 2 if strpos(FirstGen, "C")>0
+	replace parents_postsecondaryed = 3 if strpos(FirstGen, "A")>0
+	replace parents_postsecondaryed = 4 if strpos(FirstGen, "B")>0
+}
 		/* Note :
 		N = No parent has attended post-secondary
 		P = At least one parent has attended post-secondary but earned no credential or degree
@@ -172,13 +186,16 @@ tab FirstGen parents_postsecondaryed, m
 
 * Create an indicator
 gen firstgen = . 
-replace firstgen = 0 if strpos(FirstGen,"N")==0 & FirstGen != ""
-replace firstgen = 1 if strpos(FirstGen,"N")>0 
+
+count if missing(FirstGen)
+if r(N) < _N { //we only fill values if there is at least one non missing obs in FirstGen
+	replace firstgen = 0 if strpos(FirstGen,"N")==0 & FirstGen != ""
+	replace firstgen = 1 if strpos(FirstGen,"N")>0 
+}
 
 * Labels
 label define first 0 "At least one parent attended post-secondary" 1 "First-generation post-secondary student"
 label values firstgen first
-
 
 *	==========================================
 *	PART 4. - Clean PDPD data   
@@ -193,8 +210,17 @@ if "$first" == "true" {
 preserve 
 	keep ProgramofStudyTerm1
 	duplicates drop
+	drop if ProgramofStudyTerm1 == .
+	
+	* add ordered unique identifier for pathway
+	gen ProgramofStudyTerm1_ID = _n
+	
+	* add label column to fill out
 	gen ProgramofStudyTerm1_Label = ""
-	export excel using "$root/2_data-toolkit/ProgramofStudy_tolabel.xlsx", first(variable) replace
+	
+	* reorder columns 
+	order ProgramofStudyTerm1_ID ProgramofStudyTerm1 ProgramofStudyTerm1_Label, first
+	export excel using "$root/2_data-toolkit/ProgramofStudy_Template.xlsx", first(variable) replace
 restore	
 
 	dis as err "Please go into the 2_data-toolkit folder and enter the labels of your Programs of Study in the Label column of the ProgramofStudy_tolabel.xlsx file, and save as a new xlsx file once done. Then, go and change the value of the global named first to false at the top of the dofile, and run it again from the top."
@@ -204,9 +230,9 @@ restore
 * Add in the labels from the Excel template
 preserve 
 	* update the name (and file path) of the xlsx file you just created with labels info.
-	import excel using "$root/2_data-toolkit/ProgramofStudy_tolabel_filled.xlsx", firstrow clear
+	import excel using "$root/2_data-toolkit/ProgramofStudy_Template_filled.xlsx", firstrow clear
 	* drop any missing rows created during the excel import
-	drop if ProgramofStudyTerm1==""
+	drop if ProgramofStudyTerm1==.
 	*check uniqueness
 	isid ProgramofStudyTerm1
 	* save as temp datafile for merging back with the main dataset
@@ -221,13 +247,18 @@ merge m:1 ProgramofStudyTerm1 using `labels', nogen assert(1 3)
 
 * Create a numeric entry pathway variable and label it
 
+gen pathway_entry = ProgramofStudyTerm1_ID
+
+/* IF ProgramofStudyTerm1 is string, the following code instead should work
 destring(ProgramofStudyTerm1), gen(pathway_entry)
+	
 	/* Note :
 			- This may generate an error if the codes are not all numeric
 					If that is the case, please remove non-numeric characters
 					in ProgramofStudyTerm1 BEFORE using the destring() command.
 			- This will remove all the leading zeros from the numeric code
 	*/ 
+*/
 
 * Label it
 labmask pathway_entry, values(ProgramofStudyTerm1_Label)
@@ -241,6 +272,20 @@ labmask pathway_entry, values(ProgramofStudyTerm1_Label)
 preserve 
 	* update the name (and file path) of the xlsx file you created with pathways year by year info.
 	import excel "$root/2_data-toolkit/Student_Pathways_Template_Filled.xlsx", firstrow clear
+	
+	* merge with the pathway labeling file to obtain the pathway IDs for each year
+	forvalue year = 1/4 {
+	    *rename the year variable to be Term1 variable to match the labeling file
+		rename ProgramofStudyYear`year'_input ProgramofStudyTerm1  
+		*merge with labeling file
+		merge m:1 ProgramofStudyTerm1 using `labels', nogen assert(1 3)
+		*rename the term1 variable back to the year variable it actually is
+		rename ProgramofStudyTerm1 ProgramofStudyYear`year'_input
+		*rename the ID variable (coming from using) to the year ID variable it is
+		rename ProgramofStudyTerm1_ID ProgramofStudyYear`year'_ID
+		*rename the Label variable (coming from using) to the year Label variable it is
+		rename ProgramofStudyTerm1_Label ProgramofStudyYear`year'_Label
+	}	
 
 	* Check that StudentID uniquely identifies the records
 	isid StudentID 
@@ -253,17 +298,18 @@ merge 1:1 StudentID using `pathways', nogen assert(3)
 
 *** Clean and label pathway data over years 
 forvalues year=1/4 {
-	destring(ProgramofStudyYear`year'), gen(pathway_y`year')
+	gen pathway_y`year' = ProgramofStudyYear`year'_ID
 	label value pathway_y`year' pathway_entry
 }
 	/*Note
-		- This will generate an error if there are any non numeric characters in
-		the pathway data variables. They should be removed prior to that.
+		- Alternative code if the ProgramofStudyYear`year'_input var is string:
+			destring(ProgramofStudyYear`year'_input), gen(pathway_y`year')
 		- The value labels will be empty for any pathway not already defined in 
 		the PDP data. Do we want to provide a second labeling opportunity/template
 		here? (or maybe do just one labeling step after having merged in the
 		year by year data)
 	*/
+	
 
 *** Diagnostics
 
@@ -277,19 +323,20 @@ forvalues year=1/4 {
 
 * Flag pathway inconsistencies
 gen flag_pathway_y1 = 0
-replace flag_pathway_y1 = 1 if ProgramofStudyTerm1 != ProgramofStudyYear1 & ProgramofStudyTerm1 != ""
-lab var flag_pathway_y1 "Flag: Inconsistent Pathway in Term1 and Year1"
+replace flag_pathway_y1 = 1 if ProgramofStudyYear1 != ProgramofStudyYear1_input & !missing(ProgramofStudyYear1) & !missing(ProgramofStudyYear1_input)
+lab var flag_pathway_y1 "Flag: Inconsistent Pathway in Year1 between AR file and user input"
 
 * Flag new pathways
 gen flag_pathway_new = 0
-levelsof(ProgramofStudyTerm1), local(programs)
+levelsof(ProgramofStudyYear1), local(programs)
 forvalues year = 1/4 {
-	replace flag_pathway_new = 1 if strpos(`"`programs'"', ProgramofStudyYear`year') == 0
+	tostring(ProgramofStudyYear`year'_input), replace
+	replace flag_pathway_new = 1 if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
 }
 lab var flag_pathway_new "Flag: Pathway Number Non-Present in the PDP Data"
 	
 * Export flagged values
-local varstoexport "FirstName MiddleName LastName DateofBirth StudentID AttendanceStatusTerm1 CredentialTypeSoughtYear1 ProgramofStudyTerm1 pathway_entry ProgramofStudyYear1 pathway_y1 ProgramofStudyYear2 pathway_y2 ProgramofStudyYear3 pathway_y3 ProgramofStudyYear4 pathway_y4"	
+local varstoexport "FirstName MiddleName LastName DateofBirth StudentID AttendanceStatusTerm1 CredentialTypeSoughtYear1 ProgramofStudyTerm1 pathway_entry ProgramofStudyYear1 ProgramofStudyYear1_input pathway_y1 ProgramofStudyYear2_input pathway_y2 ProgramofStudyYear3_input pathway_y3 ProgramofStudyYear4_input pathway_y4"	
 cap export excel `varstoexport' if flag_pathway_y1==1 using "$root/3_data-diagnostics/Pathway_diagnostics.xlsx", first(variable) replace sheet("Y1 Inconsistency")
 cap export excel `varstoexport' if flag_pathway_new==1 using "$root/3_data-diagnostics/Pathway_diagnostics.xlsx", first(variable) sheet("New Pathway", replace)
 
@@ -356,5 +403,5 @@ lab var retention "Retention After Y1"
 *	PART 99. - Save transformed data   
 *	========================================== 
 	
-save "2_data-toolkit/cohort-transformed.dta", replace	
+save "2_data-toolkit/cohort-AR-transformed.dta", replace	
 	

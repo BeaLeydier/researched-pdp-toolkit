@@ -11,7 +11,7 @@ pathwaya      pathwaya		 x		  2
 */
 
 
-use "2_data-toolkit/cohort-transformed.dta", clear	
+use "2_data-toolkit/cohort-AR-transformed.dta", clear	
 
 keep StudentID pathway_y1 pathway_y2 pathway_y3 pathway_y4
 

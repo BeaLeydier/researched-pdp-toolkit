@@ -35,10 +35,10 @@ else {
 *	PART 2. - Generate Student List  
 *	==========================================
 
-import excel "$root/1_data-pdp/AR-file_cohort.xlsx", firstrow clear
+import excel "$root/1_data-pdp/cohort_analysis_ready_file_template_4-7-23.xlsx", firstrow clear
 
 * Remove records without a StudentID
-drop if StudentID == ""
+drop if StudentID == .
 
 * Keep student information
 keep FirstName MiddleName LastName StudentID 
@@ -60,10 +60,10 @@ unique StudentID
 	*/
 	
 * Add the pathway variable information
-gen ProgramofStudyYear1 = ""
-gen ProgramofStudyYear2 = ""
-gen ProgramofStudyYear3 = ""
-gen ProgramofStudyYear4 = ""
+gen ProgramofStudyYear1_input = ""
+gen ProgramofStudyYear2_input = ""
+gen ProgramofStudyYear3_input = ""
+gen ProgramofStudyYear4_input = ""
 
 * Export student list
 export excel "$root/2_data-toolkit/Student_Pathways_Template.xlsx", firstrow(var) replace

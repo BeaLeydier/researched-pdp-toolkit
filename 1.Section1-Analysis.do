@@ -33,7 +33,7 @@ else {
 *		Analysis ready COHORT file
 *	==========================================
 
-use "2_data-toolkit/cohort-transformed.dta", clear	
+use "2_data-toolkit/cohort-AR-transformed.dta", clear	
 
 	* Model: outcomes conditional only on initial pathway choice
 	mlogit retention i.pathway_y1, robust 

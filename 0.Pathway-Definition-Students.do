@@ -35,7 +35,7 @@ else {
 *	PART 2. - Generate Student List  
 *	==========================================
 
-import excel "$root/1_data-pdp/cohort_analysis_ready_file_template_4-7-23.xlsx", firstrow clear
+import excel "$root/1_data-pdp/T Draft Cohort_analysis_ready_file_template_4-7-23", firstrow clear
 
 * Remove records without a StudentID
 drop if StudentID == .

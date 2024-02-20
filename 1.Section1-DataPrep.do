@@ -38,7 +38,7 @@ global first "false"
 *		Analysis ready COHORT file
 *	==========================================
 
-import excel "$root/1_data-pdp/cohort_analysis_ready_file_template_4-7-23.xlsx", firstrow clear
+import excel "$root/1_data-pdp/T Draft Cohort_analysis_ready_file_template_4-7-23", firstrow clear
 
 * Remove records without a StudentID
 drop if StudentID == .
@@ -197,6 +197,31 @@ if r(N) < _N { //we only fill values if there is at least one non missing obs in
 label define first 0 "At least one parent attended post-secondary" 1 "First-generation post-secondary student"
 label values firstgen first
 
+*** Transfer-In indicator 
+
+gen enroll_type = .
+replace enroll_type = 1 if strpos(EnrollmentType, "First")>0
+replace enroll_type = 2 if strpos(EnrollmentType, "Transfer")>0
+
+label define transfer 1 "First-Time" 2 "Transfer-In"
+label val enroll_type transfer
+
+tab EnrollmentType enroll_type, m
+
+
+*** Student Age
+encode(StudentAge), gen(age) //note: as a categorical 
+
+*** Term1 GPA
+rename GPAGroupTerm1 gpa_term1 
+
+*** Pell Grant Status 
+gen pell = (PellStatusFirstYear=="Y")
+
+*** Cohort Year
+gen cohort_year = ustrregexs(0) if ustrregexm(Cohort, "20([0-9]+)")
+destring(cohort_year), replace
+
 *	==========================================
 *	PART 4. - Clean PDPD data   
 *		Generate an Entry Pathway variable		
@@ -223,14 +248,14 @@ preserve
 	export excel using "$root/2_data-toolkit/ProgramofStudy_Template.xlsx", first(variable) replace
 restore	
 
-	dis as err "Please go into the 2_data-toolkit folder and enter the labels of your Programs of Study in the Label column of the ProgramofStudy_tolabel.xlsx file, and save as a new xlsx file once done. Then, go and change the value of the global named first to false at the top of the dofile, and run it again from the top."
+	dis as err "Please go into the 2_data-toolkit folder and enter the labels of your Programs of Study in the Label column of the ProgramofStudy_Template.xlsx file, and save as a new xlsx file once done. Then, go and change the value of the global named first to false at the top of the dofile, and run it again from the top."
 	exit
 }
 	
 * Add in the labels from the Excel template
 preserve 
 	* update the name (and file path) of the xlsx file you just created with labels info.
-	import excel using "$root/2_data-toolkit/ProgramofStudy_Template_filled.xlsx", firstrow clear
+	import excel using "$root/2_data-toolkit/ProgramofStudy_Template_Filled.xlsx", firstrow clear
 	* drop any missing rows created during the excel import
 	drop if ProgramofStudyTerm1==.
 	*check uniqueness
@@ -293,8 +318,8 @@ preserve
 	tempfile pathways
 	save `pathways'
 restore 
-	* note : the assert(3) ensures no students are dropped or added from this operation
-merge 1:1 StudentID using `pathways', nogen assert(3)
+	* note : the assert(3) ensures no students are added from this operation
+merge 1:1 StudentID using `pathways', nogen assert(1 3)
 
 *** Clean and label pathway data over years 
 forvalues year=1/4 {
@@ -308,8 +333,7 @@ forvalues year=1/4 {
 		the PDP data. Do we want to provide a second labeling opportunity/template
 		here? (or maybe do just one labeling step after having merged in the
 		year by year data)
-	*/
-	
+	*/	
 
 *** Diagnostics
 
@@ -369,20 +393,24 @@ drop flag_*
 	
 * Create a categorical 
 
+* Remove leading, trailing and consecutive internal blanks in the variable
+replace CredentialTypeSoughtYear1 = strtrim(CredentialTypeSoughtYear1)
+replace CredentialTypeSoughtYear1 = stritrim(CredentialTypeSoughtYear1)
+
 gen credential_entry = . 
 replace  credential_entry = 1 if strpos(CredentialTypeSoughtYear1, "C1") >0
 replace  credential_entry = 2 if strpos(CredentialTypeSoughtYear1, "C2") >0
 replace  credential_entry = 3 if strpos(CredentialTypeSoughtYear1, "C4") >0
 replace  credential_entry = 4 if strpos(CredentialTypeSoughtYear1, "01") >0
-replace  credential_entry = 5 if strpos(CredentialTypeSoughtYear1, "A") >0 | strpos(CredentialTypeSoughtYear1, "02") >0
-replace  credential_entry = 6 if strpos(CredentialTypeSoughtYear1, "B") >0 | strpos(CredentialTypeSoughtYear1, "03") >0
-replace  credential_entry = 7 if strpos(CredentialTypeSoughtYear1, "PB") >0 | strpos(CredentialTypeSoughtYear1, "04") >0
-replace  credential_entry = 8 if strpos(CredentialTypeSoughtYear1, "M") >0 | strpos(CredentialTypeSoughtYear1, "05") >0
-replace  credential_entry = 9 if strpos(CredentialTypeSoughtYear1, "D") >0 | strpos(CredentialTypeSoughtYear1, "06") >0
-replace  credential_entry = 10 if strpos(CredentialTypeSoughtYear1, "FP") >0 | strpos(CredentialTypeSoughtYear1, "07") >0
-replace  credential_entry = 11 if strpos(CredentialTypeSoughtYear1, "PC") >0 | strpos(CredentialTypeSoughtYear1, "08") >0
-replace  credential_entry = 99 if strpos(CredentialTypeSoughtYear1, "NC") >0 | strpos(CredentialTypeSoughtYear1, "99") >0
-replace  credential_entry = . if strpos(CredentialTypeSoughtYear1, "-1") >0 
+replace  credential_entry = 5 if CredentialTypeSoughtYear1 == "A" | strpos(CredentialTypeSoughtYear1, "02") >0 | strpos(CredentialTypeSoughtYear1, "Associate Degree") >0
+replace  credential_entry = 6 if CredentialTypeSoughtYear1 == "B" | strpos(CredentialTypeSoughtYear1, "03") >0 | strpos(CredentialTypeSoughtYear1, "Bachelor's Degree") >0
+replace  credential_entry = 7 if CredentialTypeSoughtYear1 == "PB" | strpos(CredentialTypeSoughtYear1, "04") >0 |strpos(CredentialTypeSoughtYear1, "Post Baccalaureate Certificate") >0
+replace  credential_entry = 8 if CredentialTypeSoughtYear1 == "M" | strpos(CredentialTypeSoughtYear1, "05") >0 | strpos(CredentialTypeSoughtYear1, "Master's Degree") >0
+replace  credential_entry = 9 if CredentialTypeSoughtYear1 == "D" | strpos(CredentialTypeSoughtYear1, "06") >0 | strpos(CredentialTypeSoughtYear1, "Doctoral Degree") >0
+replace  credential_entry = 10 if CredentialTypeSoughtYear1 == "FP" | strpos(CredentialTypeSoughtYear1, "07") >0 | strpos(CredentialTypeSoughtYear1, "First Professional Degree") >0
+replace  credential_entry = 11 if CredentialTypeSoughtYear1 == "PC" | strpos(CredentialTypeSoughtYear1, "08") >0 | strpos(CredentialTypeSoughtYear1, "Graduate/Professional Certificate") >0
+replace  credential_entry = 99 if CredentialTypeSoughtYear1 == "NC"| strpos(CredentialTypeSoughtYear1, "99") >0 | strpos(CredentialTypeSoughtYear1, "Non- Credential Program") >0
+replace  credential_entry = . if CredentialTypeSoughtYear1 == "-1"
 
 tab CredentialTypeSoughtYear1 credential_entry, m
 	
@@ -393,12 +421,44 @@ label value credential_entry creds
 	
 *	==========================================
 *	PART 7. - Clean PDP data   
-*		Create an Outcome variable			
+*		Create short term outcome variables			
 *	========================================== 
 	
 rename Retention retention 
 lab var retention "Retention After Y1" 	
+
+rename Persistence persistence 
+lab var persistence "Persistence After Y1" 	
+
+*	==========================================
+*	PART 8. - Clean PDP data   
+*		Create long term outcome variables			
+*	========================================== 
 	
+	
+gen graduate = (TimetoCredential != .)	
+lab var graduate "Graduate"
+
+gen transfer_out = (YearofLastEnrollmentotheri != 0 & enroll_type==1)
+lab var transfer_out "Transfer Out"
+	
+gen years_to_cred = YearstoBachelorsatCohortIn
+replace years_to_cred = YearstoAssociatesorCertific if years_to_cred == 0
+lab var years_to_cred "Years to Graduation (Cohort Inst)"
+
+tab years_to_cred graduate, m
+	//check consistency: that all the 0 for graduate are also 0 for years to cred
+	
+gen years_to_cred_otherinst = YearstoBachelorsatOtherIns
+replace  years_to_cred_otherinst = AY if years_to_cred_otherinst == 0
+lab var years_to_cred_otherinst "Years to Graduation (Previous Inst)"
+
+tab years_to_cred_otherinst enroll_type, m
+	//check consistency
+
+gen graduate_otherinst = (years_to_cred_otherinst != 0)
+
+		
 *	==========================================
 *	PART 99. - Save transformed data   
 *	========================================== 

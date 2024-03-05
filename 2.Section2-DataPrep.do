@@ -13,7 +13,31 @@ pathwaya      pathwaya		 x		  2
 
 use "2_data-toolkit/cohort-AR-transformed.dta", clear	
 
-keep StudentID pathway_y1 pathway_y2 pathway_y3 pathway_y4
+keep StudentID pathway_y1 pathway_y2 pathway_y3 pathway_y4 graduate graduate_other transfer no_creds cohort_year years_to_cred years_to_cred_otherinst latest_year latest_year_minus6 latest_year_minus3 credential_entry enroll_type
+
+* keep the pathway of interest 
+keep if pathway_y1 == 8
+
+* save the pathway largest value across all four years
+local max = 0
+forvalues y = 1/4 {
+sum pathway_y`y' 
+local max`y' = `r(max)'  
+if `max`y'' > `max' {
+    local max = `max`y'' 
+}
+}
+global max = `max'
+
+* generate outcome variables
+gen pathway_y5 = .
+gen pathway_y6 = . 
+
+replace pathway_y5 = 0 if no_creds == 1
+replace pathway_y6 = 0 if no_creds == 1
+
+
+/// Sankey reshape
 
 * create the destination variable for each year 
 forvalues year = 1/4 {
@@ -55,10 +79,12 @@ label value source pathway_entry
 
 rename destination_ value 
 
+exit
+
 * sankey diagram 
 
-sankey value, from(source) to(destpathway) by(year)
-graph export "4_output/sankey-test.png", as(png) replace
+sankey value, from(source) to(destpathway) by(year) palette(okabe) 
+graph export "4_output/sankey-test.png", as(png) replace 
  
 
 /* archives

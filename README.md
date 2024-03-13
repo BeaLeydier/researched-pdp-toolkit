@@ -64,6 +64,9 @@ Before digging into the data, we recommend running some diagnostics, especially 
 
 ### Pathways Over Time
 
+![Pathway 8 Over Time](4_output/sankey-test.png)
+
+![All Pathways Over Time](4_output/sankey-test-alltoall.png)
 
 ### Short-Term Outcomes
 

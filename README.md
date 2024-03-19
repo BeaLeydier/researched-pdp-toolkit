@@ -70,6 +70,9 @@ Before digging into the data, we recommend running some diagnostics, especially 
 
 ### Short-Term Outcomes
 
+![Completion by Pathway](4_output/s2_pathway_stacked.png)
+
+![Conditional Completion by Pathway](4_output/s2_pathway_stacked_cond.png)
 
 ## Section 3 : Gate-Keeper Courses 
 

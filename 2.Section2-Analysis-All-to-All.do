@@ -67,7 +67,7 @@ exit
 * create the coloring variable 
 egen colorvar = group(destpathway)
 
-sankey value, from(source) to(destpathway) by(year) palette(tableau) colorvar(colorvar) showtotal ctitles("Year 1" "Year 2" "Year 3" "Year 4") ctpos("top") ctg(10) title("All Pathways Over Time")
+sankey value, from(source) to(destpathway) by(year) palette(tableau) colorvar(colorvar) showtotal ctitles("Year 1" "Year 2" "Year 3" "Year 4") title("All Pathways Over Time") 
 graph export "4_output/sankey-test-alltoall.png", as(png) replace 
  
 

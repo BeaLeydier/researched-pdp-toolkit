@@ -17,31 +17,6 @@ use "2_data-toolkit/cohort-AR-transformed.dta", clear
 
 keep StudentID pathway_y1 pathway_y2 pathway_y3 pathway_y4 graduate graduate_other transfer no_creds cohort_year years_to_cred years_to_cred_otherinst latest_year latest_year_minus6 latest_year_minus3 credential_entry enroll_type
 
-* keep the pathway of interest 
-keep if pathway_y1 == 8
-
-* save the pathway largest value across all four years
-local max = 0
-forvalues y = 1/4 {
-sum pathway_y`y' 
-local max`y' = `r(max)'  
-if `max`y'' > `max' {
-    local max = `max`y'' 
-}
-}
-global max = `max'
-
-* generate outcome variables
-gen pathway_y5 = .
-gen pathway_y6 = . 
-
-replace pathway_y5 = 0 if no_creds == 1
-replace pathway_y6 = 0 if no_creds == 1
-
-* if graduate by year i, replace value to be $max + 1 for year i and subsequent years 
-forvalues i = 2/6 {
-	replace pathway_y`i' = $max + 1 if years_to_cred <= `i' & graduate==1
-}
 
 /// Sankey reshape
 
@@ -92,8 +67,8 @@ exit
 * create the coloring variable 
 egen colorvar = group(destpathway)
 
-sankey value, from(source) to(destpathway) by(year) palette(tableau) colorvar(colorvar) showtotal ctitles("Year 1" "Year 2" "Year 3" "Year 4") ctpos("top") ctg(10) title("Pathway 8 Over Time")
-graph export "4_output/sankey-test.png", as(png) replace 
+sankey value, from(source) to(destpathway) by(year) palette(tableau) colorvar(colorvar) showtotal ctitles("Year 1" "Year 2" "Year 3" "Year 4") ctpos("top") ctg(10) title("All Pathways Over Time")
+graph export "4_output/sankey-test-alltoall.png", as(png) replace 
  
 
 /* archives

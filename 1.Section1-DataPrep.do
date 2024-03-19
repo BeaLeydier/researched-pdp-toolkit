@@ -484,7 +484,7 @@ lab var graduate "Complete (Cohort Inst.)"
 gen graduate_other = (YearstoBachelorsatOtherIns != 0) | (AY != 0)
 lab var graduate_other "Transfer and Complete (Other Inst.)"
 
-gen transfer = (YearofLastEnrollmentotheri != 0 & YearstoBachelorsatOtherIns == 0 & AY == 0)
+gen transfer = (YearofLastEnrollmentotheri != 0)
 lab var transfer "Transfer"
 
 gen years_to_cred = YearstoBachelorsatCohortIn

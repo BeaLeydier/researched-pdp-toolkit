@@ -85,7 +85,7 @@ bys StudentID (student_year): gen cumu_creditsattempted = sum(credits_attempted)
 gen ideal_creditsearned = 0
 label var ideal_creditsearned "ideal number of credits a student would earn each term"
 replace ideal_creditsearned = 15 if inrange(student_year, 1, 2)
-bys studentid (student_year): gen cumu_idealcreditsearned = sum(ideal_creditsearned)
+bys StudentID (student_year): gen cumu_idealcreditsearned = sum(ideal_creditsearned)
 label var cumu_idealcreditsearned "cumulative ideal number of credits a student would have earned each term"	
 	
 *	==========================================

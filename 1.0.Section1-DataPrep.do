@@ -227,54 +227,26 @@ destring(cohort_year), replace
 *		Generate an Entry Pathway variable		
 *	========================================== 
 
-*** Create labels for the Program of Study variable
+* Add in Pathway labels from the Excel template
 
-* Export the values of the variable Program of Study Term 1 and Year 1 into an Excel sheet
-	* this is done only once, when the dofile is run for the first time.
-if "$first" == "true" {
-preserve 
-	keep ProgramofStudyTerm1 ProgramofStudyYear1
-	
-	* reshape at the program of study unique value level
-	rename ProgramofStudyTerm1 program1
-	rename ProgramofStudyYear1 program2 
-	gen id = _n 
-	reshape long program, i(id) j(j)
-	drop id j
-	
-	duplicates drop
-	drop if program == .
-	
-	* add ordered unique identifier for pathway
-	rename program ProgramofStudy
-	sort ProgramofStudy
-	gen ProgramofStudy_ID = _n
-	
-	* add label column to fill out
-	gen ProgramofStudy_Label = ""
-	
-	* reorder columns 
-	order ProgramofStudy_ID ProgramofStudy ProgramofStudy_Label, first
-	export excel using "$root/2_data-toolkit/ProgramofStudy_Template.xlsx", first(variable) replace
-restore	
-
-	dis as err "Please go into the 2_data-toolkit folder and enter the labels of your Programs of Study in the Label column of the ProgramofStudy_Template.xlsx file, and save as a new xlsx file once done. Then, go and change the value of the global named first to false at the top of the dofile, and run it again from the top."
-	exit
+if fileexists("$root/2_data-toolkit/ProgramofStudy_Template_Filled.xlsx") {
+	preserve 
+		* update the name (and file path) of the xlsx file you just created with labels info.
+		import excel using "$root/2_data-toolkit/ProgramofStudy_Template_Filled.xlsx", firstrow clear
+		* drop any missing rows created during the excel import
+		drop if ProgramofStudy==.
+		*check uniqueness
+		isid ProgramofStudy
+		* save as temp datafile for merging back with the main dataset
+		tempfile labels
+		save `labels'
+	restore		
+} 
+else {
+	dis as err "Please follow instructins in 0.Pathway-Labeling to label the pathways/programs of study in your PDP data. Change the file name in the command above to your filled template with the pathway labels."
 }
-	
-* Add in the labels from the Excel template
-preserve 
-	* update the name (and file path) of the xlsx file you just created with labels info.
-	import excel using "$root/2_data-toolkit/ProgramofStudy_Template_Filled.xlsx", firstrow clear
-	* drop any missing rows created during the excel import
-	drop if ProgramofStudy==.
-	*check uniqueness
-	isid ProgramofStudy
-	* save as temp datafile for merging back with the main dataset
-	tempfile labels
-	save `labels'
-restore	
-	* merge back with the main datasets to add the label columns for both program of study vars
+
+* Merge back with the main datasets to add the label columns for both program of study vars
 	* note that keep(1 3) ensures no observation is added just from the excel template
 
 * Merge for the Term1 program of study	
@@ -331,17 +303,17 @@ preserve
 	drop if StudentID == .
 	
 	* merge with the pathway labeling file to obtain the pathway IDs for each year
-	forvalue year = 1/4 {
+	forvalue term = 1/8 {
 	    *rename the year variable to be Term1 variable to match the labeling file
-		rename ProgramofStudyYear`year'_input ProgramofStudy 
+		rename ProgramofStudyTerm`term'_input ProgramofStudy 
 		*merge with labeling file
 		merge m:1 ProgramofStudy using `labels', nogen keep(1 3)
 		*rename the label file variable back to the year variable it actually is
-		rename ProgramofStudy ProgramofStudyYear`year'_input
+		rename ProgramofStudy ProgramofStudyTerm`term'_input
 		*rename the ID variable (coming from using) to the year ID variable it is
-		rename ProgramofStudy_ID ProgramofStudyYear`year'_ID_input
+		rename ProgramofStudy_ID ProgramofStudyTerm`term'_ID_input
 		*rename the Label variable (coming from using) to the year Label variable it is
-		rename ProgramofStudy_Label ProgramofStudyYear`year'_Label_input
+		rename ProgramofStudy_Label ProgramofStudyTerm`term'_Label_input
 	}	
 
 	* Check that StudentID uniquely identifies the records
@@ -355,8 +327,9 @@ merge 1:1 StudentID using `pathways', nogen assert(1 3)
 
 *** Clean and label pathway data over years 
 forvalues year=1/4 {
-	gen pathway_y`year' = ProgramofStudyYear`year'_ID_input
-	labmask pathway_y`year', values(ProgramofStudyYear`year'_Label_input)
+	local term = `year' * 2
+	gen pathway_y`year' = ProgramofStudyTerm`term'_ID_input
+	labmask pathway_y`year', values(ProgramofStudyTerm`term'_Label_input)
 }
 	/*Note
 		- Alternative code if the ProgramofStudyYear`year'_input var is string:
@@ -366,6 +339,12 @@ forvalues year=1/4 {
 		here? (or maybe do just one labeling step after having merged in the
 		year by year data)
 	*/	
+	
+*** Clean and label pathway data over terms 
+forvalues term=1/8 {
+	gen pathway_t`term' = ProgramofStudyTerm`term'_ID_input
+	labmask pathway_t`term', values(ProgramofStudyTerm`term'_Label_input)
+}	
 
 *** Diagnostics
 
@@ -376,6 +355,8 @@ forvalues year=1/4 {
 		2. Pathway numbers from the user-entered Excel that don't correspond 
 			to any pathways defined in the PDP data
 */
+
+/* 
 
 * Flag pathway inconsistencies
 gen flag_pathway_y1 = 0
@@ -405,6 +386,8 @@ cap export excel `varstoexport' if flag_pathway_y1==1 using "$root/3_data-diagno
 cap export excel `varstoexport' if flag_pathway_new==1 using "$root/3_data-diagnostics/Pathway_diagnostics.xlsx", first(variable) sheet("New Pathway", replace)
 
 drop flag_*
+
+*/
 
 *	==========================================
 *	PART 6. - Clean PDP data   
@@ -525,3 +508,5 @@ gen latest_year_minus3 = latest_year - 3
 	
 save "2_data-toolkit/cohort-AR-transformed.dta", replace	
 	
+* Save labels for the graphs later
+label save using "$root/2_data-toolkit/pathwaylabels.do", replace	

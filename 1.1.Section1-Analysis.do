@@ -35,9 +35,6 @@ else {
 
 * Load data
 use "$root/2_data-toolkit/cohort-AR-transformed.dta", clear	
-
-* Save labels for the graphs later
-label save using "$root/2_data-toolkit/pathwaylabels.do", replace
 	
 *	==========================================
 *	PART 3. - Create combined outcome variable

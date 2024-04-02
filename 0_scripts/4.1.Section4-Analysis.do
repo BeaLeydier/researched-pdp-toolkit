@@ -53,6 +53,8 @@ global pathwaylist "1, 3, 4, 5"
 *	PART 4. - Cumulative credit graphs
 *	==========================================
 
+/* limit to 150% time aka 3 years for an associate's */
+
 preserve 
 
 keep if inlist(pathway_entry, $pathwaylist)

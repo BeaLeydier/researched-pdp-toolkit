@@ -84,9 +84,11 @@ bys StudentID (student_year): gen cumu_creditsattempted = sum(credits_attempted)
 * ideal 
 gen ideal_creditsearned = 0
 label var ideal_creditsearned "ideal number of credits a student would earn each term"
-replace ideal_creditsearned = 15 if inrange(student_year, 1, 2)
+replace ideal_creditsearned = 20 if inrange(student_year, 1, 3)
 bys StudentID (student_year): gen cumu_idealcreditsearned = sum(ideal_creditsearned)
 label var cumu_idealcreditsearned "cumulative ideal number of credits a student would have earned each term"	
+	
+	/* make the ideal a function of the starting degree. Bachelor's: 6 years, 120 credits total. */
 	
 *	==========================================
 *	PART 99. - Save transformed data   

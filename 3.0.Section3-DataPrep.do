@@ -2,11 +2,11 @@
 
 /*******************************************************************************
 
-		SECTION 1 - Data Prep
+		SECTION 3 - Data Prep
 		
 		
 		This file takes your PDP data and puts it in the format appropriate
-		to run Section 1 of the Toolkit on them.
+		to run Section 3 of the Toolkit.
 		
 *******************************************************************************/
 

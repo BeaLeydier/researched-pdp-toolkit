@@ -76,5 +76,11 @@ Before digging into the data, we recommend running some diagnostics, especially 
 
 ## Section 3 : Gate-Keeper Courses 
 
+![Gatekeeper Courses (Weighted)](4_output/s3-weighted.png)
+
+![Gatekeeper Courses (Labeled)](4_output/s3-labeled.png)
+
 
 ## Section 4 : Credit Accumulation
+
+![Credit Accumulation](4_output/s4-cumu.png)

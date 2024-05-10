@@ -31,133 +31,138 @@ else {
 	exit
 }
 
-* Parameter : Display Summers as separate terms y/n
-global summer "no"
-
-	/*NOTE : Add user centered explanation.*/
 
 *	==========================================
-*	PART 2. - Generate Unique Student List  
+*	PART 2. - Create a Student-Term Level 
+*		Dataset from the PDP Course File
 *	==========================================
 
-import excel "$root/1_data-pdp/T Draft Cohort_analysis_ready_file_template_4-7-23", firstrow clear
+import delimited "$root/1_data-pdp/$arcoursefile", clear case(preserve)	
+	/* Note : the option case(preserve) ensures the variable names are read
+		into Stata with the same case as in the original file. */
 
-* Remove records without a StudentID
-drop if StudentID == .
+* Keep student-term information only
+keep FirstName MiddleName LastName StudentID Cohort CohortTerm AcademicYear AcademicTerm
 
-* Keep student information
-keep FirstName MiddleName LastName StudentID Cohort CohortTerm
+* Make the dataset at the student-term level by dropping any duplicate rows
+	/* Note : the previous dataset was at the course level, so we expect the 
+		same student to be observed multiple times in the same academic term. 
+		After removing all the course specific variables and dropping the 
+		duplicate rows, we should obtain a Student-Term dataset. */
+duplicates drop
 
-* Generate unique student records
-duplicates drop StudentID, force
+* Check that the dataset is unique at the StudentID-AcademicYear-AcademicTerm level
+unique StudentID AcademicYear AcademicTerm
 
-* Check that student ID is a unique identifier of records
-unique StudentID
-	/*Note: this will return an error if StudentID doesn't uniquely identify record.
+	/*Note: This will return an error if student-term do not uniquely identify record.
 	
-	Discuss with Harvard how much we want to troubleshoot ahead of time, we could
-	do some programming to anticipate issues like :
-		- missing studentID
-		- multiple rows with different name spellings
+	If you are having an error at this stage, consider the following
+		- missing or erraneous studentIDs
+		- same student with different name spellings
+		- same student with different cohort/term of record
 		
-	Alternatively, we can force the uniqueness by StudentID above, at the risk of
-	losing information.
+	You can clean any redundant information at this stage. Alternatively, you
+	can force the uniqueness of records by StudentID AcademicYear AcademicTerm 
+	by running the following command, at the risk of losing information :
+
+		duplicates drop StudentID AcademicYear AcademicTerm, force
 	*/
+
+* Create a numeric value for the AcademicTerm to allow for sorting
+label define term 1 "SPRING" 2 "SUMMER" 3 "FALL"
+encode(AcademicTerm), gen(AcademicTerm_Num) label(term)
+
+* Sort by StudentID and AcademicTerm 
+sort StudentID AcademicYear AcademicTerm_Num
 	
-*	==========================================
-*	PART 3. - Label Terms for Each Student  
-*	==========================================
+	/* Note : Ideas for data quality checks.
 	
-* Create a numeric indicator for term to sort terms in chronological order
-label define terms 1 "SPRING" 2 "SUMMER" 3 "FALL"
-encode CohortTerm, gen(CohortTerm_Num) label(terms)
-order CohortTerm_Num, after(CohortTerm)
-
-* Derive Year from Cohort
-gen CohortYear = regexs(0) if regexm(Cohort, "20[0-9][0-9]")
-	/* NOTE: alternative code
-		gen CohortYear = substr(Cohort, 1, 4)
-	*/
-	
-* Define Term 1
-gen StudentTerm1 = CohortYear + "_" + string(CohortTerm_Num) + "." + CohortTerm
-
-* Define Subsequent terms 
-
-*** If the institution wants to plot SPRING - FALL terms (default)
-
-if "$summer" == "no" {
-
-	forvalues term = 2/8 {
-
-	local prev = `term' - 1
-
-	gen prevyear = regexs(0) if regexm(StudentTerm`prev', "20[0-9][0-9]") //extract year
-	destring(prevyear), replace
-	gen prevterm = substr(StudentTerm`prev', strpos(StudentTerm`prev', "_") + 1, 1) //extract term (1 character after _)
-
-	gen prevyearplusone = prevyear + 1
-
-	gen StudentTerm`term' =  string(prevyearplusone) + "_" + "1." + "SPRING" if prevterm == "3" //Spring of Year+1 follows Fall
-	replace StudentTerm`term' = string(prevyear) + "_" + "3." + "FALL" if prevterm == "2" //Fall follows Summer
-	replace StudentTerm`term' = string(prevyear) + "_" + "3." + "FALL" if prevterm == "1" //Fall follows Spring
-
-	drop prevyear prevterm prevyearplusone
-
+		At this stage, you may want to check this student list is complete
+		and consistent. For example, you can check 
 		
-	}
-
-}
-
-*** If the institution wants to plot SPRING - SUMMER - FALL terms
-
-if "$summer" == "yes" {
-    
-	forvalues term = 2/8 {
-
-	local prev = `term' - 1
-
-	gen prevyear = regexs(0) if regexm(StudentTerm`prev', "20[0-9][0-9]") //extract year
-	destring(prevyear), replace
-	gen prevterm = substr(StudentTerm`prev', strpos(StudentTerm`prev', "_") + 1, 1) //extract term (1 character after _)
-
-	gen prevyearplusone = prevyear + 1
-
-	gen StudentTerm`term' =  string(prevyearplusone) + "_" + "1." + "SPRING" if prevterm == "3" // Spring of Year+1 follows Fall
-	replace StudentTerm`term' = string(prevyear) + "_" + "3." + "FALL" if prevterm == "2" //Fall follows Summer
-	replace StudentTerm`term' = string(prevyear) + "_" + "2." + "SUMMER" if prevterm == "1" //Summer follows Spring
-
-	drop prevyear prevterm prevyearplusone
-
-		
-	}
-
-}
-
+			>> Does the first term that a student is observed in this dataset 
+			   correspond to their cohort term? You should expect it to be the 
+			   case. 
+			   
+				* store the first (minimum) year for each student
+				bys StudentID: egen min_year = min(AcademicYear)
+				
+				* store the first (minimum) term for each student, and label it
+				bys StudentID: egen min_term_num = min(AcademicTerm_Num)
+				label values min_term_num term 
+				decode min_term_num, gen(min_term)
+				
+				* extract the start year from the Cohort variable
+				gen cohort_year = ustrregexs(0) if ustrregexm(Cohort, "20([0-9]+)")
+				destring(cohort_year), replace
+				
+				* browse cases where the Cohort start term is different from the first term
+				browse if cohort_year != min_year & CohortTerm != min_term
+			   
+			>> How many distinct terms a given student is observed?
+			
+				* count distinct year-terms by student
+				unique(AcademicYear AcademicTerm), by(StudentID) gen(unique_terms)
+				
+				* carryforward that value on all the rows of a given student
+				bys StudentID: egen n_terms = min(unique_terms)
+				drop unique_terms
+				
+				* tabulate number of terms 
+				tab n_terms 
+					/* Note : at this stage, if you have kept additional variables 
+						from your Course file (e.g. student characteristics), you 
+						can tabulate the numebr of terms by characteristics.
+					*/
+	*/ 
 
 
 *	==========================================
-*	PART 4. - Add Variables for Input
+*	PART 3. - Add Variables for Term-Level Pathway Input
 *	==========================================	
 	
-* Add the pathway variable information
-gen ProgramofStudyTerm1_input = ""
-gen ProgramofStudyTerm2_input = ""
-gen ProgramofStudyTerm3_input = ""
-gen ProgramofStudyTerm4_input = ""
-gen ProgramofStudyTerm5_input = ""
-gen ProgramofStudyTerm6_input = ""
-gen ProgramofStudyTerm7_input = ""
-gen ProgramofStudyTerm8_input = ""
+* Add the pathway variable where the pathway information will be entered
+gen ProgramofStudyTerm_input = ""
 
-* Export student list
-export excel "$root/2_data-toolkit/Student_Pathways_Template.xlsx", firstrow(var) replace
+* Export student-term list template to fill
+drop AcademicTerm
+export excel "$root/2_data-toolkit/Student_Pathways_Template_Terms.xlsx", firstrow(var) replace
 
 
 *	==========================================
-*	PART 5. - Fill
+*	PART 4. - Collapse Data at the Student-Year Level
+*	==========================================	
+
+* Keep student-year information only
+keep FirstName MiddleName LastName StudentID Cohort CohortTerm AcademicYear
+
+* Make the dataset at the student-year level by dropping any duplicate rows
+duplicates drop
+
+* Check that the dataset is unique at the StudentID-AcademicYear-AcademicTerm level
+unique StudentID AcademicYear 	
+
+	/* Note : Similar quality checks as above can be run here.
+
+	*/ 
+
+*	==========================================
+*	PART 5. - Add Variables for Year-Level Pathway Input
+*	==========================================	
+	
+* Add the pathway variable where the pathway information will be entered
+gen ProgramofStudyYear_input = ""
+
+* Export student-year list template to fill
+export excel "$root/2_data-toolkit/Student_Pathways_Template_Years.xlsx", firstrow(var) replace
+	
+	
+*	==========================================
+*	PART 6. - Fill
 *	==========================================
 
-/* Insert instructions on how to open the Excel file we generated 
-	and fill the student pathway information. */
+/* You can now navigate to the 2_data-toolkit folder of your repository and fill
+out of of the templates we generated, by entering the PathwayID information for 
+each student in the corresponding column for each Term or Year that you are 
+entering data for this student for. */
 

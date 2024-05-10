@@ -34,7 +34,7 @@ else {
 *		Analysis ready COURSE file
 *	==========================================
 
-use "2_data-toolkit/cohort-AR-transformed.dta", clear	
+use "$root/2_data-toolkit/section1_student.dta", clear	
 
 * Keep relevant data
 keep StudentID pathway_y1 pathway_y2 pathway_y3 pathway_y4 graduate graduate_other transfer no_creds cohort_year years_to_cred years_to_cred_otherinst latest_year latest_year_minus6 latest_year_minus3 credential_entry enroll_type YearofLastEnrollmentcohort YearofLastEnrollmentotheri pathway_entry pathway_entry_label
@@ -78,7 +78,7 @@ replace pathway_y = max+12 if pathway_y==. & graduate==0 & transfer==1 & YearofL
 *	PART 99. - Save
 *	==========================================
 
-save "2_data-toolkit/s2-student-year.dta", replace	
+save "$root/2_data-toolkit/section2_student-year.dta", replace	
 
 * Add to the saved labels for the graphs 
-label save using "$root/2_data-toolkit/pathwaylabels2.do", replace	
+label save using "$root/2_data-toolkit/pathwaylabels_plusoutcomes.do", replace	

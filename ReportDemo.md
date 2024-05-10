@@ -40,7 +40,7 @@
 
 ### Pathways Over Time
 
-![Pathway 8 Over Time](4_output/sankey-test.png)
+![Pathway 8 Over Time](4_output/sankey-pathway5.png)
 
 ![All Pathways Over Time](4_output/sankey-test-alltoall.png)
 

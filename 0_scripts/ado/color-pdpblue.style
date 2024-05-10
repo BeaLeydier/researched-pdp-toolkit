@@ -1,0 +1,6 @@
+*! version 1.0.0  5may2024
+
+* label "pdpblue"
+label resource "COLOR-PDPBLUE"
+
+set rgb "51 34 136"

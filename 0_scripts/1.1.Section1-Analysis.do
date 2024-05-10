@@ -34,7 +34,7 @@ else {
 *	==========================================
 
 * Load data
-use "$root/2_data-toolkit/cohort-AR-transformed.dta", clear	
+use "$root/2_data-toolkit/section1_student.dta", clear	
 	
 *	==========================================
 *	PART 3. - Create combined outcome variable
@@ -59,7 +59,7 @@ lab values outcome outcomes
 
 	/* Note : the color palette below is optimized for color-blindedness. */
 
-global color1 "51 34 136" //deep purple (cool and somewhat dark)
+global color1 "51 34 136" //deep blue (cool and somewhat dark)
 global color2 "68 170 153" //teal (mid-bright and cool)
 global color3 "136 34 85" //mauve (leans towards warm and medium in brightness)
 global color4 "204 153 0" //soft amber (warm, not too bright, but clear enough)

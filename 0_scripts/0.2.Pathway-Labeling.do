@@ -35,7 +35,7 @@ else {
 *	==========================================
 
 * Load PDP AR cohort file
-import excel "$root/1_data-pdp/T Draft Cohort_analysis_ready_file_template_4-7-23", firstrow clear
+import excel "$root/1_data-pdp/$arcohortfile", firstrow clear
 
 * Remove records without a StudentID
 drop if StudentID == .
@@ -62,24 +62,23 @@ save `pdppathways'
 *		pathways present in user-imputed data
 *	==========================================
 
-* Add in Pathway labels from the Excel template
+* Add in Student Pathways entered from the Excel template
 
-if fileexists("$root/2_data-toolkit/Student_Pathways_Template_Filled.xlsx") {
+if fileexists("$root/2_data-toolkit/$studentpathwaysfile") {
 	preserve 
 		* update the name (and file path) of the xlsx file you just created with labels info.
-		import excel using "$root/2_data-toolkit/Student_Pathways_Template_Filled.xlsx", firstrow clear
+		import excel using "$root/2_data-toolkit/$studentpathwaysfile", firstrow clear
 		
-		* keep pathway variables
-		keep ProgramofStudyTerm*_input
+		* keep only the pathway variable
+		capture keep ProgramofStudyTerm_input
+		capture keep ProgramofStudyYear_input
 		
 		* reshape at the unique program of study value 
-		forvalues t=1/8 {
-		    rename ProgramofStudyTerm`t'_input program`t'
-		}
-		gen id = _n
-		reshape long program, i(id) j(j)
-		drop id j
 		duplicates drop
+		
+		* rename 
+		capture rename ProgramofStudyTerm_input program 
+		capture rename ProgramofStudyYear_input program 		
 		
 		* save as temp datafile for merging back with the other dataset
 		tempfile userpathways
@@ -98,10 +97,13 @@ else {
 
 * Load pathway lists
 use `pdppathways', clear
-append using `userpathways'
+capture append using `userpathways'
 
 * Drop duplicates
 duplicates drop
+
+* Drop missing values 
+drop if program == .
 
 * Add ordered unique identifier for pathway
 rename program ProgramofStudy
@@ -119,6 +121,6 @@ gen ProgramofStudy_Label = ""
 * Reorder columns 
 order ProgramofStudy_ID ProgramofStudy ProgramofStudy_Label, first
 
-export excel using "$root/2_data-toolkit/ProgramofStudy_Template.xlsx", first(variable) replace	
+export excel using "$root/2_data-toolkit/ProgramofStudy_Label_Template.xlsx", first(variable) replace	
 
 	

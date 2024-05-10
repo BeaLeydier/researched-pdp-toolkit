@@ -82,9 +82,13 @@ bys StudentID (student_year): gen cumu_creditsearned = sum(credits_earned)
 bys StudentID (student_year): gen cumu_creditsattempted = sum(credits_attempted)	
 	
 * ideal 
+
+**TODO : make it a function of the type of institution/or starting degree?
+
 gen ideal_creditsearned = 0
 label var ideal_creditsearned "ideal number of credits a student would earn each term"
-replace ideal_creditsearned = 20 if inrange(student_year, 1, 3)
+replace ideal_creditsearned = 60 if inrange(student_year, 1, 3)
+
 bys StudentID (student_year): gen cumu_idealcreditsearned = sum(ideal_creditsearned)
 label var cumu_idealcreditsearned "cumulative ideal number of credits a student would have earned each term"	
 	
@@ -93,7 +97,6 @@ label var cumu_idealcreditsearned "cumulative ideal number of credits a student 
 *	==========================================
 *	PART 99. - Save transformed data   
 *	========================================== 
-	
 
 save "2_data-toolkit/section4.dta", replace	
 	

@@ -29,17 +29,7 @@ else {
 }
 
 *	==========================================
-*	PART 2. - Pathway Data Entry and Labeling
-*	==========================================
-
-/* Insert notes/explanations on the pathway template */
-
-*do "0.1.Pathway-Definition-Students.do"
-
-*do "0.2.Pathway-Labeling.do"
-
-*	==========================================
-*	PART 3. - Make Data
+*	PART 2. - Make Data
 *	==========================================
 
 do "$root/0_scripts/0.3.1.DataPrep-Section1.do"

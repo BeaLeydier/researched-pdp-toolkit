@@ -29,20 +29,6 @@ else {
 	exit
 }
 
-
-*	==========================================
-*	PART 2. - AR File Names
-*	==========================================
-
-	/* INSTRUCTIONS:
-		Replace the file names in quotes with the file names you are using.
-	*/
-
-* Name of your PDP AR files (including the file extension)
-global arcohortfile "ar-cohort-example.xlsx"
-global arcoursefile "ar-course-example.csv"
-
-
 *	==========================================
 *	PART 3. - Pathway Data Entry
 *	==========================================

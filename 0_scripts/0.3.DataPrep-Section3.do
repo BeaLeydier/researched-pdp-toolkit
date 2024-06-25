@@ -17,7 +17,7 @@
 * Stata set up
 set more off
 
-* Define machine-specific file path 
+* INSTRUCTIONS: Define machine-specific file path 
 
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
@@ -30,49 +30,49 @@ else {
 	exit
 }
 
+* Load the paramaters 
+quietly { //quietly ensures the code is run in the background without displaying any output
+	do "$root/1.Add-PDP-Data.do"
+	do "$root/2.3.Add-Pathway-Data.do"
+	do "$root/3.Define-Institution-Parameters.do"
+}
+
 *	==========================================
 *	PART 2. - Load PDP data
 *		Analysis ready COURSE file
 *	==========================================
 
-import delimited "$root/1_data-pdp/students-fake.csv", clear case(preserve)
-
-	/* NOTE: note on harmonizing variable names/data inputs, and limiting
-	this data import to the course specific vars.*/
-
+import delimited "$root/1_data-pdp/$arcoursefile", clear case(preserve)
 
 *	==========================================
-*	PART 3.1 - Clean PDP data 
-*		Merge with Outcomes and Pathway Data
-*		Defined and Created in Section 1 
+*		PART 3 - Clean PDP data 
+*
 *	==========================================
  
-merge m:1 StudentID using "2_data-toolkit/cohort-AR-transformed.dta", assert(2 3) keep(3) nogen
+**  Merge with Outcomes and Pathway Data Defined and Created in Section 1 
+merge m:1 StudentID using "2_data-toolkit/section1_student.dta", assert(2 3) keep(3) nogen
 
-	/* NOTE: Insert notes on merge diagnostics */	
-
-*	==========================================
-*	PART 3.2 - Clean PDP data 
-*		Limit to Pathway of Interest 
-*	==========================================	
-		
-	
-*	==========================================
-*	PART 3.3 - Clean PDP data 
-*		Create outcomes of interest : term level
-*	==========================================
-	
 ** Create a numeric indicator for term to sort terms in chronological order
-label define terms 1 "SPRING" 2 "SUMMER" 3 "FALL"
+label define terms 1 "FALL" 2 "SPRING" 3 "SUMMER"
 encode AcademicTerm, gen(AcademicTerm_Num) label(terms)
 order AcademicTerm_Num, after(AcademicTerm)
 
-gen AcademicYearTerm = AcademicYear * 100 + AcademicTerm_Num
-order AcademicYearTerm, after(AcademicTerm_Num)	
+	/* Note : this assumes that within a given AcademicYear, the Fall is the 
+		first term, followed by Spring and by Summer. For example, 
+			AcademicYear 2017-18 would refer to the following terms
+				FALL : Fall of the calendar year 2017 
+				SPRING : Spring of the calendar year 2018
+				SUMMER : Summer of the calendar year 2018
+		If in your data, AcademicYear is coded differently, or if at your 
+			institution, Fall is not the first term of the AcademicYear, you 
+			will want to change the order in the label defined below, so that 
+			your pathway data entry is correctly sequentially ordered.
+	*/
+
 	
 *	==========================================
-*	PART 3.4 - Clean PDP data 
-*		Create outcomes of interest : student-course level
+*	PART 4 - Create Outcomes of Interest 
+*		Student-Course level
 *	==========================================
 
 ** Outcome for a student for one given course
@@ -84,7 +84,7 @@ gen course_pass = 0
 replace course_pass = (CreditsAttempted == CreditsEarned)
 
 ** Indicator for whether a course is a student's first attempt
-sort StudentID CourseNumber AcademicYearTerm 
+sort StudentID CourseNumber AcademicYear AcademicTerm_Num 
 by StudentID CourseNumber: gen studcourse_attempt = _n
 
 gen studcourse_attemptfirst = (studcourse_attempt == 1)
@@ -103,13 +103,14 @@ gen studcourse_attemptfirstpass_grad = studcourse_attemptfirstpass * graduate
 
 
 *	==========================================
-*	PART 3.5 - Clean PDP data 
-*		Create outcomes of interest : course level
+*	PART 5 - Create outcomes of interest
+*		Course level
 *	==========================================
 
 ** Total Attempters for one course
 codebook CourseNumber StudentID
-	/* NOTE: Note on unicity, missing values */
+
+	/* NOTE: Check for any missing values. */
 
 unique StudentID, by(CourseNumber) gen(total_attempters_temp)
 bys CourseNumber : egen total_attempters = max(total_attempters_temp)
@@ -146,9 +147,8 @@ sum course_fail course_pass studcourse_attemptfirstfail studcourse_attemptfirstp
 sum proportion_failing prob_completer_fail prob_completer_pass prob_completer_diff 
 	//should all be continuous proportions between 0-1
 
-
 *	==========================================
-*	PART 99. - Save transformed data   
+*	PART 6. - Save transformed data   
 *	========================================== 
 	
 * Keep the pathway-course level variables only

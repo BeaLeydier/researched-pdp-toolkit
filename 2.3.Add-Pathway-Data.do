@@ -50,10 +50,10 @@
 	*/
 
 * Name of the file where you define the student pathways (once filled)
-global studentpathwaysfile "add-your-file-name-here.xlsx"
+global studentpathwaysfile "add-your-student-pathways-file-name-here.xlsx"
 
 * Name of the file where you define the pathway labels (once filled)
-global pathwaylabelsfile "add-your-file-name-here.xlsx"
+global pathwaylabelsfile "add-your-pathway-labels-file-name-here.xlsx"
 
 * Change the word Year below to the word Term if you are doing a Term level analysis
 global studentpathwaytimeline "Year"

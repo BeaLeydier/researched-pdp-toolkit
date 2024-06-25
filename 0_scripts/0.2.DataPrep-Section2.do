@@ -16,7 +16,7 @@
 * Stata set up
 set more off
 
-* Define machine-specific file path 
+* INSTRUCTIONS: Define machine-specific file path 
 
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
@@ -27,6 +27,13 @@ else if c(username)=="INSERT-MACHINE-USERNAME" {
 else {
 	di as err "Please enter machine-specific path information"
 	exit
+}
+
+* Load the paramaters 
+quietly { //quietly ensures the code is run in the background without displaying any output
+	do "$root/1.Add-PDP-Data.do"
+	do "$root/2.3.Add-Pathway-Data.do"
+	do "$root/3.Define-Institution-Parameters.do"
 }
 
 *	==========================================
@@ -71,8 +78,7 @@ replace pathway_y = max+10 if pathway_y==. & graduate==0 & transfer==0
 replace pathway_y = max+11 if pathway_y==. & graduate==1 & years_to_cred<=student_year
 replace pathway_y = max+12 if pathway_y==. & graduate==0 & transfer==1 & YearofLastEnrollmentotheri>=student_year
 
-/* Explain/troubleshoot missing cases */
-
+/* Note : Troubleshoot missing cases here. */
 
 *	==========================================
 *	PART 99. - Save

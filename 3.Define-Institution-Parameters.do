@@ -3,35 +3,13 @@
 
 		PARAMETERS		
 		
-		This is where you define the parameters for your analysis, for example
-			- Is this a 2 or 4 year college
-			- The code of the pathway you want to look into in Section 2
-		
+		This is where you define the parameters for your analysis, like whether
+			you are a 2-year or 4-year college.
+			
 *******************************************************************************/
 
 *	==========================================
-*	PART 1. - File path
-*	==========================================
-
-* Stata set up
-set more off
-
-* Define machine-specific file path 
-
-if c(username)=="bl517" {
-	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
-}
-else if c(username)=="INSERT-MACHINE-USERNAME" {
-	global root "INSERT MACHINE-SPECIFIC FILEPATH"
-}
-else {
-	di as err "Please enter machine-specific path information"
-	exit
-}
-
-
-*	==========================================
-*	PART 2. - Institution Type
+*	PART 1. - Institution Type
 *	==========================================
 
 	/* INSTRUCTIONS:
@@ -41,9 +19,4 @@ else {
 
 global institutiontype "2year"
 global institutiontype "4year"
-
-
-*	==========================================
-*	PART 3. - Number of Credits for Completion
-*	==========================================
 

@@ -30,7 +30,7 @@ Specifically, the sections are
 
 - Section 2 : Mapping Student Progression
     This section contains two subsections : Pathways Over Time and Short-Term Outcomes.
-         The Pathways Over Time subsection is analogous to the CTE toolkit's Section 2, and looks at student outcomes by pathway over time. One key difference with the CTE toolkit is that, because the PDP Analysis Ready Files contain year-level outcome data instead of term-level outcome data, the graphs in this unit display progression year by year, instead of term by term.
+         The Pathways Over Time subsection is analogous to the CTE toolkit's Section 2, and looks at student outcomes by pathway over time. One key difference with the CTE toolkit is that, because the PDP Analysis Ready Files contain year-level outcome data instead of term-level outcome data, the graphs in this unit display progression year by year, instead of term by term. 
         The Short-Term Outcomes subsection focuses on Year 2 outcomes available in the PDP Analysis Ready File : Retention and Persistence. It contains similar analyses as those in Section 1, but focused on these two short term outcomes, instead of the final Completion outcomes.
 
 - Section 3 : Gate-Keeper Courses
@@ -93,7 +93,7 @@ While this toolkit is meant to be as plug-and-play as possible, you will need to
     - add your PDP data file name to the 1.1.Add-PDP-Data.do dofile
     - add your pathway data and pathway label files name to the 2.3.Add-Pathway-Data.do dofile
 1. At the top of every dofile you run, you will need to define your machine-specific filepath, following the example provided in each dofile in the Set Up section
-1. Before running any analysis, you will need to define your institution's parameters, like whether you are a 2-year or 4-year institution, and how many credits are considered "completed" for a degree, in the dofile 3.Define-Institution-Parameters.
+1. Before running any analysis, you will need to define your institution's parameters, like whether you are a 2-year or 4-year institution in the dofile 3.Define-Institution-Parameters.
 1. Inside any dofile you run, you will need to update the code everywhere there is a comment that says INSTRUCTIONS. This may include updating a file name or a file path, changing a variable name, or other customizations.
 1. Inside any dofile you run, you may need to make additional changes to the code if you run into any errors due to data types or file types being inconsistent. Each dofile contains ample documentation explaining what the code aims to do, as well as suggestions for checks and possible alternative code in case of common errors. 
 
@@ -134,7 +134,9 @@ Start by running the 2.1.Create-Pathway-Data-Entry-Template.do dofile : this cre
 
 ![Pathway Data Entry Template](2_data-toolkit/pathway-entry-year.png)
 
-Then, open and run the 2.2.Create-Pathway-Labeling-Tempalte.do dofile : this creates a template for you to label your pathways, so that graphs do not display program codes but pathway names. In order for this file to run, you will need to add the name of your own student pathway data file (which you just created and added to 2_data-toolkit) on line 89.
+Then, open and run the 2.2.Create-Pathway-Labeling-Tempalte.do dofile : this creates a template for you to label your pathways, so that graphs do not display program codes but pathway names. In order for this file to run, you will need to add the name of your own student pathway data file (which you just created and added to 2_data-toolkit) on line 87. The pathway labeling template looks as follows
+
+![Pathway Labeling Template](2_data-toolkit/pathway-label.png)
 
 Finally, open and run the 2.3.Add-Pathway-Data.do dofile : this script defines the file names for your pathway data files as globals, analogous to the 1.1.Add-PDP-Data.do dofile, which ensures they are correctly being read by the toolkit in subsequent scripts.
 
@@ -143,9 +145,8 @@ Finally, open and run the 2.3.Add-Pathway-Data.do dofile : this script defines t
 In this dofile, you will define 
 
 1. Whether your institution is 2-year or 4-year
-1. How many credits constitute a "complete" degree
 
-These two parameters are defined as globals here and used later on in the analysis. You can change these parameters later on, and run again the analysis, if you want to produce multiple reports with different parameters.
+This parameters is defined as a global here and used later on in the analysis. You can change this parameter later on, and run again the analysis, if you want to produce multiple reports with different parameters.
 
 ### Step 4. Make Data
 

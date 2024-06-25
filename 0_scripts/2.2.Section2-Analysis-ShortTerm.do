@@ -15,7 +15,7 @@
 * Stata set up
 set more off
 
-* Define machine-specific file path 
+* INSTRUCTIONS : Define machine-specific file path 
 
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
@@ -26,6 +26,13 @@ else if c(username)=="INSERT-MACHINE-USERNAME" {
 else {
 	di as err "Please enter machine-specific path information"
 	exit
+}
+
+* Load the paramaters 
+quietly { //quietly ensures the code is run in the background without displaying any output
+	do "$root/1.Add-PDP-Data.do"
+	do "$root/2.3.Add-Pathway-Data.do"
+	do "$root/3.Define-Institution-Parameters.do"
 }
 
 *	==========================================
@@ -57,23 +64,26 @@ lab values outcome outcomes
 
 // Colors 
 
-	/* Note : the color palette below is optimized for color-blindedness. */
-
-global color1 "51 34 136" //deep purple (cool and somewhat dark)
-global color2 "68 170 153" //teal (mid-bright and cool)
-global color3 "136 34 85" //mauve (leans towards warm and medium in brightness)
-global color4 "204 153 0" //soft amber (warm, not too bright, but clear enough)
+* Add the toolkit's ado folder to Stata's recognized ado paths to add the custom colors
+adopath ++ "$root/0_scripts/ado" 
 
 
 // Student subset 
 
-	/* Note on commenting on/off depending on type of institution. */
+	/* Note : 
+	
+		For 2-year institutions, we keep stuednts who enrolled at least 3 years
+			before the last PDP year. For 4-year institutions, we keep students
+			who enrolled at least 6 years before the last PDP year.
+	*/
 
-* For 2-year institutions : keep students who enrolled at least 3 years before the last PDP year
-*keep if cohort_year <= latest_year_minus3
-
-* For 4-year institutions : keep students who enrolled at least 6 years before the last PDP year
-*keep if cohort_year <= latest_year_minus6
+if "$institutiontype" == "2year"	{
+	keep if cohort_year <= latest_year_minus3	
+}
+if "$institutiontype" == "4year"	{
+	keep if cohort_year <= latest_year_minus6
+	
+}	
 	
 *	==========================================
 *	PART 5. - Define custom programs for margins regression and plot exports
@@ -121,7 +131,7 @@ program define mlogit_marginsplot_stacked
 		do "$root/2_data-toolkit/pathwaylabels.do"
 		label values pathway_level "`marginslabel'"
 		graph bar prediction_1 prediction_2, stack over(pathway_level) ///
-			bar(1, fcolor("$color1") lcolor(black)) bar(2, fcolor("$color2") lcolor(black)) ///
+			bar(1, fcolor(pdpblue) lcolor(black)) bar(2, fcolor(pdpteal) lcolor(black)) ///
 			ytitle("Probability") legend(label(1 "`outcome1label'") label(2 "`outcome2label'")) ///
 			xsize(5.5) ///
 			`options'
@@ -153,7 +163,7 @@ program define marginplots_export
 margins `varlist', at(`at') predict(outcome(1)) predict(outcome(2))
 marginsplot, bydimension(`varlist') byopts(title("Adjusted Probability of Outcomes" "by `atlabel'") graphregion(fcolor(white)) imargin(medium)) ///
 			 ytitle("Adjusted Probability") xtitle("`atlabel'") ylabel(0(0.2)1) noci legend(order(1 "`outcome1label'" 2 "`outcome2label'")) plotregion(margin(zero)) yline(0, lcolor(black)) ///
-			 plot1opts(mcolor("$color1") lcolor("$color1")) plot2opts(mcolor("$color2") lcolor("$color2")) ///
+			 plot1opts(mcolor(pdpblue) lcolor(pdpblue)) plot2opts(mcolor(pdpteal) lcolor(pdpteal)) ///
 			 `options'
 graph export "`file'", replace
 
@@ -183,13 +193,13 @@ if `ndims' == 1 {
 	exit
 }
 else if `ndims' == 2 {
-	local plotopts `" plot1opts(mcolor("$color1") lcolor("$color1")) plot2opts(mcolor("$color2") lcolor("$color2")) "'
+	local plotopts `" plot1opts(mcolor(pdpblue) lcolor(pdpblue)) plot2opts(mcolor(pdpteal) lcolor(pdpteal)) "'
 }
 else if `ndims' == 3 {
-	local plotopts `" plot1opts(mcolor("$color1") lcolor("$color1")) plot2opts(mcolor("$color2") lcolor("$color2")) plot3opts(mcolor("$color3") lcolor("$color3")) "'
+	local plotopts `" plot1opts(mcolor(pdpblue) lcolor(pdpblue)) plot2opts(mcolor(pdpteal) lcolor(pdpteal)) plot3opts(mcolor(pdpmauve) lcolor(pdpmauve)) "'
 }
 else if `ndims' == 4 {
-	local plotopts `" plot1opts(mcolor("$color1") lcolor("$color1")) plot2opts(mcolor("$color2") lcolor("$color2")) plot3opts(mcolor("$color3") lcolor("$color3")) plot4opts(mcolor("$color4") lcolor("$color4")) "'
+	local plotopts `" plot1opts(mcolor(pdpblue) lcolor(pdpblue)) plot2opts(mcolor(pdpteal) lcolor(pdpteal)) plot3opts(mcolor(pdpmauve) lcolor(pdpmauve)) plot4opts(mcolor(pdplavender) lcolor(pdplavender)) "'
 }
 else if `ndims' > 4 {
 	dis as err "The plotdimension() variable you chose takes more than 4 unique values in the whole dataset. For readability, this tool doesn't allow more than four dimensions to be plotted at a time. Please choose (and, if needed, create) a plotdimension() variable taking between 2 and 4 unique values."
@@ -231,15 +241,16 @@ mlogit_marginsplot_stacked outcome i.pathway_y1 ///
 	note("Note: Probabilities for each outcome are stacked." "A regression model adjusts probabilities to account for student demographic traits, institution, and cohort.", size(vsmall)) ///
 	outcome1label("Y2 Retention") outcome2label("Y2 Persistence")
 		
-		/* Insert note on convergence */
-			
-exit			
+		/* Note : given the number of dimensions in this analysis, 
+			you need enough data for the analysis to converge and produce a plot. */
 	
 *	==========================================
 *	PART 6. - Export all combinations of margin plots by pathway from the adjusted model
 *	==========================================
 	
-/* Insert note on running a mlogit program before these marginplot programs */	
+/* Note : you need to run one mlogit command before running the marginplot 
+	programs below. The marginplot program will be based on the output of the 
+	mlogit regression. */	
 	
 ** GPA, overall
 marginplots_export pathway_y1, at("gpa_term1 = (2(0.25)4)") atlabel("Term1 GPA") file("$root/4_output/pathway_gpa.png")
@@ -257,7 +268,6 @@ marginplots_double_export pathway_y1, at(race = (1 2 5 6) gpa_term1 = (2(0.25)4)
 marginplots_export pathway_y1, at("age = (1(1)3)") atlabel("Age at Entry") file("$root/4_output/pathway_age.png")
 
  		
-	
 *	==========================================
 *	PART 7. - Credentials at Entry 
 *	==========================================

@@ -1,10 +1,10 @@
 
 /*******************************************************************************
 
-		MAKE DATA
+		SECTION 0 - Summary Statistics
 		
-		
-		This dofile runs all the DataPrep files in order.
+		This file takes your transformed cohort PDP data and runs 
+		Section 1 analyses of the toolkit.
 		
 *******************************************************************************/
 
@@ -15,7 +15,7 @@
 * Stata set up
 set more off
 
-* INSTRUCTIONS: Define machine-specific file path 
+* Define machine-specific file path 
 
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
@@ -35,15 +35,23 @@ quietly { //quietly ensures the code is run in the background without displaying
 	do "$root/3.Define-Institution-Parameters.do"
 }
 
+* Add the toolkit's ado folder to Stata's recognized ado paths to add the custom colors
+adopath ++ "$root/0_scripts/ado" 
+
 *	==========================================
-*	PART 2. - Make Data
+*	PART 2. - Load PDP data
+*		Analysis ready COHORT file
 *	==========================================
 
-do "$root/0_scripts/0.1.DataPrep-Section1.do"
-	
-do "$root/0_scripts/0.2.DataPrep-Section2.do"
-	
-do "$root/0_scripts/0.3.DataPrep-Section3.do"
-	
-do "$root/0_scripts/0.4.DataPrep-Section4.do"
-	
+* Load data
+use "$root/2_data-toolkit/section1_student.dta", clear	
+
+*	==========================================
+*	PART 3. - Explore Data
+*	==========================================
+
+graph bar if race < 10, over(credential_entry) over(race) asyvars ///
+	bar(1, fcolor(pdpblue) lcolor(black)) bar(2, fcolor(pdpteal) lcolor(black)) /// 
+	bar(3, fcolor(pdpmauve) lcolor(black)) bar(4, fcolor(pdplavender) lcolor(black)) ///
+	title("Credentials at Entry by Race")
+graph export "$root/4_output/sec0_credsbyrace.png", replace

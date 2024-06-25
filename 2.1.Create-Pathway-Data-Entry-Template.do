@@ -71,6 +71,13 @@ else {
 	exit
 }
 
+* Load the paramaters 
+quietly { //quietly ensures the code is run in the background without displaying any output
+	do "$root/1.Add-PDP-Data.do"
+	do "$root/2.3.Add-Pathway-Data.do"
+	do "$root/3.Define-Institution-Parameters.do"
+}
+
 *	==========================================
 *	PART 2. - Create a Student-Term Level 
 *		Dataset from the PDP Course File

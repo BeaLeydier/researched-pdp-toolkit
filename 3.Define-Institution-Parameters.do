@@ -29,30 +29,9 @@ else {
 	exit
 }
 
-*	==========================================
-*	PART 3. - Pathway Data Entry
-*	==========================================
-
-	/* INSTRUCTIONS:
-		Replace the file names in quotes with the file names you are using.
-
-		When two options are suggested for the same global, comment out 
-		the option you are NOT using, by placing an asterix in front of it.
-	*/
-
-* Name of the file where you define the student pathways (once filled)
-global studentpathwaysfile "Student_Pathways_Template_Years_Filled.xlsx"
-
-* Temporal unit at which the pathway data entry is done 
-global studentpathwaytimeline "Term"
-global studentpathwaytimeline "Year"
-
-* Name of the file where you define the pathway labels (once filled)
-global pathwaylabelsfile "ProgramofStudy_Label_Template_Filled.xlsx"
-
 
 *	==========================================
-*	PART 4. - Institution Type
+*	PART 2. - Institution Type
 *	==========================================
 
 	/* INSTRUCTIONS:
@@ -62,4 +41,9 @@ global pathwaylabelsfile "ProgramofStudy_Label_Template_Filled.xlsx"
 
 global institutiontype "2year"
 global institutiontype "4year"
+
+
+*	==========================================
+*	PART 3. - Number of Credits for Completion
+*	==========================================
 

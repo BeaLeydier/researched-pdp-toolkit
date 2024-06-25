@@ -1,10 +1,10 @@
 
 /*******************************************************************************
 
-		MAKE DATA
+		MAKE Report
 		
 		
-		This dofile runs all the DataPrep files in order.
+		This dofile runs all the Analysis dofiles.
 		
 *******************************************************************************/
 
@@ -28,12 +28,22 @@ else {
 	exit
 }
 
+/* Insert notes/explanations on having run Make Data before. */
+
+
 *	==========================================
-*	PART 2. - Pathway Data Entry and Labeling
+*	PART 2. - Make Report
 *	==========================================
 
-/* Insert notes/explanations on the pathway template */
+do "$root/0_scripts/1.1.Section1-Analysis.do"
+	
+do "$root/0_scripts/2.1.Section2-Analysis-OnePathway.do"
 
-do "0.1.Pathway-Definition-Students.do"
-
-do "0.2.Pathway-Labeling.do"
+do "$root/0_scripts/2.2.Section2-Analysis-ShortTerm.do"
+	
+do "$root/0_scripts/3.1.Section3-Analysis"
+	
+do "$root/0_scripts/4.1.Section4-Analysis"
+	
+	
+	

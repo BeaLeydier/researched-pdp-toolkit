@@ -1,13 +1,30 @@
-
 /*******************************************************************************
 
-		PATHWAY LABELING
-		
-		
-		This file helps you define labels for all the pathways (programs of
-		study) listed in your PDP data.
-		
+		CREATE TEMPLATE TO LABEL PATHWAY DATA		
+				
+			This dofile takes you through the steps to labeling your student
+			pathway data in a way that will make it convenient to display.
+				
 *******************************************************************************/
+
+/* 
+	This dofile creates a pre-filled template of student pathways for 
+	you to define labels for, and saves it under 2_data-toolkit. 
+	
+	The template consists of the list of pathways included either in your PDP 
+	AR files (under the Program of Study variable) or in the student pathway 
+	information you have filled out in the previous step. 
+	
+	For each unique pathway present in your data, it exports the ProgramofStudy
+	number. It also creates a unique ID for each pathway in a numeric sequence
+	starting from 1, which will make it easier to display pathways side by 
+	side in graphs.
+	
+	For each pathway, you should fill in the ProgramofStudy_Label column with 
+	the name of the pathway you want displayed on your graphs.
+				
+*/
+
 
 *	==========================================
 *	PART 1. - Set Up 
@@ -16,7 +33,7 @@
 * Stata set up
 set more off
 
-* Define machine-specific file path 
+* INSTRUCTIONS: Define machine-specific file path 
 
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
@@ -28,6 +45,7 @@ else {
 	di as err "Please enter machine-specific path information"
 	exit
 }
+
 
 *	==========================================
 *	PART 2. - Create a list of unique
@@ -64,30 +82,30 @@ save `pdppathways'
 
 * Add in Student Pathways entered from the Excel template
 
-if fileexists("$root/2_data-toolkit/$studentpathwaysfile") {
-	preserve 
-		* update the name (and file path) of the xlsx file you just created with labels info.
-		import excel using "$root/2_data-toolkit/$studentpathwaysfile", firstrow clear
-		
-		* keep only the pathway variable
-		capture keep ProgramofStudyTerm_input
-		capture keep ProgramofStudyYear_input
-		
-		* reshape at the unique program of study value 
-		duplicates drop
-		
-		* rename 
-		capture rename ProgramofStudyTerm_input program 
-		capture rename ProgramofStudyYear_input program 		
-		
-		* save as temp datafile for merging back with the other dataset
-		tempfile userpathways
-		save `userpathways'
-	restore		
-} 
-else {
-	dis as err "No user-entered pathway information at the student level."
-}
+preserve 
+	* INSTRUCTIONS: change the name below to the name of your file with student pathways (including extension)
+	import excel using "$root/2_data-toolkit/insert-name-of-student-pathway-file.xlsx", firstrow clear
+	
+	* keep only the pathway variable
+		/* Note : capture ignores a line of code if it returns an error.
+			Here, if the pathway file is at the Year level, line 77 will 
+			return an error and be ignored; and vice versa, if the pathway
+			file is at the Term level, line 78 will return an error and be 
+			ignored. */
+	capture keep ProgramofStudyTerm_input
+	capture keep ProgramofStudyYear_input
+	
+	* reshape at the unique program of study value 
+	duplicates drop
+	
+	* rename 
+	capture rename ProgramofStudyTerm_input program 
+	capture rename ProgramofStudyYear_input program 		
+	
+	* save as temp datafile for merging back with the other dataset
+	tempfile userpathways
+	save `userpathways'
+restore		
 
 
 

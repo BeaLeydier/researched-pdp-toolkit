@@ -15,7 +15,7 @@
 * Stata set up
 set more off
 
-* Define machine-specific file path 
+* INSTRUCTIONS: Define machine-specific file path 
 
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
@@ -32,11 +32,11 @@ else {
 *	PART 2. - Make Data
 *	==========================================
 
-do "$root/0_scripts/0.3.1.DataPrep-Section1.do"
+do "$root/0_scripts/0.1.DataPrep-Section1.do"
 	
-do "$root/0_scripts/0.3.2.DataPrep-Section2.do"
+do "$root/0_scripts/0.2.DataPrep-Section2.do"
 	
-do "$root/0_scripts/0.3.3.DataPrep-Section3.do"
+do "$root/0_scripts/0.3.DataPrep-Section3.do"
 	
-do "$root/0_scripts/0.3.4.DataPrep-Section4.do"
+do "$root/0_scripts/0.4.DataPrep-Section4.do"
 	

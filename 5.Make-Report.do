@@ -1,10 +1,10 @@
 
 /*******************************************************************************
 
-		MAKE DATA
+		MAKE Report
 		
 		
-		This dofile runs all the DataPrep files in order.
+		This dofile runs all the Analysis dofiles.
 		
 *******************************************************************************/
 
@@ -28,12 +28,26 @@ else {
 	exit
 }
 
+* Load the paramaters 
+quietly { //quietly ensures the code is run in the background without displaying any output
+	do "$root/1.Add-PDP-Data.do"
+	do "$root/2.3.Add-Pathway-Data.do"
+	do "$root/3.Define-Institution-Parameters.do"
+}
+
 *	==========================================
-*	PART 2. - Pathway Data Entry and Labeling
+*	PART 2. - Make Report
 *	==========================================
 
-/* Insert notes/explanations on the pathway template */
+do "$root/0_scripts/1.1.Section1-Analysis.do"
+	
+do "$root/0_scripts/2.1.Section2-Analysis-OnePathway.do"
 
-do "0.1.Pathway-Definition-Students.do"
-
-do "0.2.Pathway-Labeling.do"
+do "$root/0_scripts/2.2.Section2-Analysis-ShortTerm.do"
+	
+do "$root/0_scripts/3.1.Section3-Analysis"
+	
+do "$root/0_scripts/4.1.Section4-Analysis"
+	
+	
+	

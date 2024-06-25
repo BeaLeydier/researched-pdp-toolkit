@@ -17,7 +17,7 @@
 * Stata set up
 set more off
 
-* Define machine-specific file path 
+* INSTRUCTIONS: Define machine-specific file path 
 
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
@@ -30,8 +30,16 @@ else {
 	exit
 }
 
-* Fill with "true" if it is you first time running this file, false otherwise
-global first "false"
+* Load the paramaters 
+quietly { //quietly ensures the code is run in the background without displaying any output
+	do "$root/1.Add-PDP-Data.do"
+	do "$root/2.3.Add-Pathway-Data.do"
+	do "$root/3.Define-Institution-Parameters.do"
+}
+
+/* INSTRUCTIONS : replace "no" by "yes" if you want to run the pathway data 
+	entry diagnostics when you add in the pathway data. */
+global rundiagnostics "no"
 
 *	==========================================
 *	PART 2. - Load PDP data
@@ -243,7 +251,7 @@ if fileexists("$root/2_data-toolkit/$pathwaylabelsfile") {
 	restore		
 } 
 else {
-	dis as err "Please follow instructins in 0.Pathway-Labeling to label the pathways/programs of study in your PDP data. Change the appropriate file name to your filled pathway labels template file in the 1.Define-Parameters dofile."
+	dis as err "Please follow instructins in 2.2.Create-Pathway-Labeling-Template.do to label the pathways/programs of study in your PDP data. Change the appropriate file name to your filled pathway labels template file in the 1.Define-Parameters dofile."
 }
 
 * Merge back with the main datasets to add the label columns for both program of study vars
@@ -429,48 +437,52 @@ forvalues term=1/12 {
 
 }
 
-*** Diagnostics
 
-/* Note
-	There are a few diagnostics we can do at this stage, and export separately.
-		1. Students whose pathway from term1 in the PDP data isn't the same
-			as their pathway in year1 from the user-entered Excel
-		2. Pathway numbers from the user-entered Excel that don't correspond 
-			to any pathways defined in the PDP data
-*/
+*	==========================================
+*	PART 5. OPTIONAL - Data  Diagnostics
+*		On Pathway Data Entry			
+*	==========================================  
 
-/* 
+if "$rundiagnostics" != "no" {
 
-* Flag pathway inconsistencies
-gen flag_pathway_y1 = 0
-replace flag_pathway_y1 = 1 if ProgramofStudyYear1 != ProgramofStudyYear1_input & !missing(ProgramofStudyYear1) & !missing(ProgramofStudyYear1_input)
-lab var flag_pathway_y1 "Flag: Inconsistent Pathway in Year1 between AR file and user input"
+	/* Note
+		There are a few diagnostics we can do at this stage, and export separately.
+			1. Students whose pathway from term1 or year1 in the PDP data isn't the same
+				as their pathway in year1 from the user-entered Excel
+			2. Pathway numbers from the user-entered Excel that are new compared 
+				to the list of pathways included in the PDP Program of Study variable 
+	*/
 
-* Flag new pathways
-gen flag_pathway_new = 0
-gen flag_pathway_new_years = ""
-levelsof(ProgramofStudyYear1), local(programs) //compare to list of program of studies listed in Year1 var
-forvalues year = 1/4 {
-	tostring(ProgramofStudyYear`year'_input), replace
-	replace flag_pathway_new = 1 if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
-	replace flag_pathway_new_years = flag_pathway_new_years + "Year`year' " if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
+	* Flag pathway inconsistencies
+	gen flag_pathway_y1 = 0
+	replace flag_pathway_y1 = 1 if ProgramofStudyYear1 != ProgramofStudyYear1_input & !missing(ProgramofStudyYear1) & !missing(ProgramofStudyYear1_input)
+	lab var flag_pathway_y1 "Flag: Inconsistent Pathway in Year1 between AR file and user input"
+
+	* Flag new pathways
+	gen flag_pathway_new = 0
+	gen flag_pathway_new_years = ""
+	levelsof(ProgramofStudyYear1), local(programs) //compare to list of program of studies listed in Year1 var
+	forvalues year = 1/4 {
+		tostring(ProgramofStudyYear`year'_input), replace
+		replace flag_pathway_new = 1 if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
+		replace flag_pathway_new_years = flag_pathway_new_years + "Year`year' " if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
+	}
+	levelsof(ProgramofStudyTerm1), local(programs) //compare to list of program of studies listed in Term1 var
+	forvalues year = 1/4 {
+		tostring(ProgramofStudyYear`year'_input), replace
+		replace flag_pathway_new = 1 if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
+		replace flag_pathway_new_years = flag_pathway_new_years + "Year`year' " if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
+	}
+	lab var flag_pathway_new "Flag: Program of Study Code Non-Present in the PDP AR File"
+		
+	* Export flagged values
+	local varstoexport "FirstName MiddleName LastName DateofBirth StudentID AttendanceStatusTerm1 CredentialTypeSoughtYear1 ProgramofStudyTerm1 pathway_entry ProgramofStudyYear1 ProgramofStudyYear1_input pathway_y1 ProgramofStudyYear2_input pathway_y2 ProgramofStudyYear3_input pathway_y3 ProgramofStudyYear4_input pathway_y4 flag_pathway_y1 flag_pathway_new flag_pathway_new_years"	
+	cap export excel `varstoexport' if flag_pathway_y1==1 using "$root/3_data-diagnostics/Pathway_diagnostics.xlsx", first(variable) replace sheet("Y1 Inconsistency")
+	cap export excel `varstoexport' if flag_pathway_new==1 using "$root/3_data-diagnostics/Pathway_diagnostics.xlsx", first(variable) sheet("New Pathway", replace)
+
+	drop flag_*
+
 }
-levelsof(ProgramofStudyTerm1), local(programs) //compare to list of program of studies listed in Term1 var
-forvalues year = 1/4 {
-	tostring(ProgramofStudyYear`year'_input), replace
-	replace flag_pathway_new = 1 if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
-	replace flag_pathway_new_years = flag_pathway_new_years + "Year`year' " if strpos(`"`programs'"', ProgramofStudyYear`year'_input) == 0
-}
-lab var flag_pathway_new "Flag: Program of Study Code Non-Present in the PDP AR File"
-	
-* Export flagged values
-local varstoexport "FirstName MiddleName LastName DateofBirth StudentID AttendanceStatusTerm1 CredentialTypeSoughtYear1 ProgramofStudyTerm1 pathway_entry ProgramofStudyYear1 ProgramofStudyYear1_input pathway_y1 ProgramofStudyYear2_input pathway_y2 ProgramofStudyYear3_input pathway_y3 ProgramofStudyYear4_input pathway_y4 flag_pathway_y1 flag_pathway_new flag_pathway_new_years"	
-cap export excel `varstoexport' if flag_pathway_y1==1 using "$root/3_data-diagnostics/Pathway_diagnostics.xlsx", first(variable) replace sheet("Y1 Inconsistency")
-cap export excel `varstoexport' if flag_pathway_new==1 using "$root/3_data-diagnostics/Pathway_diagnostics.xlsx", first(variable) sheet("New Pathway", replace)
-
-drop flag_*
-
-*/
 
 *	==========================================
 *	PART 6. - Clean PDP data   

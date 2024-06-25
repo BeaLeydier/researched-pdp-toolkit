@@ -6,6 +6,7 @@
 # EXCEPT if it is an .md file (for the readmes and other documentations)
 !*data*/*.md
 
-# EXCEPT the two example files 
-!2_data-toolkit/ProgramofStudy_Template_Filled.xlsx
-!2_data-toolkit/Student_Pathways_Template_Filled.xlsx
+# EXCEPT the two example 
+!2_data-toolkit/pathway-entry-term.png 
+!2_data-toolkit/pathway-entry-year.png 
+!2_data-toolkit/pathway-label.png 

@@ -15,7 +15,7 @@
 * Stata set up
 set more off
 
-* Define machine-specific file path 
+* INSTRUCTIONS : Define machine-specific file path 
 
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
@@ -26,6 +26,13 @@ else if c(username)=="INSERT-MACHINE-USERNAME" {
 else {
 	di as err "Please enter machine-specific path information"
 	exit
+}
+
+* Load the paramaters 
+quietly { //quietly ensures the code is run in the background without displaying any output
+	do "$root/1.Add-PDP-Data.do"
+	do "$root/2.3.Add-Pathway-Data.do"
+	do "$root/3.Define-Institution-Parameters.do"
 }
 
 *	==========================================
@@ -41,29 +48,33 @@ use "$root/2_data-toolkit/section4.dta", clear
 *	PART 3. - Define parameters : student population subset, chart colors 
 *	==========================================
 
+* Add the toolkit's ado folder to Stata's recognized ado paths to load custom colors
+adopath ++ "$root/0_scripts/ado" 
 
-global color1 "51 34 136" //deep purple (cool and somewhat dark)
-global color2 "68 170 153" //teal (mid-bright and cool)
-global color3 "136 34 85" //mauve (leans towards warm and medium in brightness)
-global color4 "204 153 0" //soft amber (warm, not too bright, but clear enough)
+* Define list of pathways to display on the chart
+
+	/* INSTRUCTIONS : Change the following list based on the pathways you 
+		want to display on the chart. Use the Pathway IDs generated in the 
+		labeling template.
+	*/
 
 global pathwaylist "1, 3, 4, 5"
 
+ 
 *	==========================================
 *	PART 4. - Cumulative credit graphs
 *	==========================================
 
-/* limit to 150% time aka 3 years for an associate's */
-
 preserve 
 
 keep if inlist(pathway_entry, $pathwaylist)
+
 collapse (mean) cumu_*, by(pathway_entry student_year)
 
-twoway (line cumu_creditsearned student_year, lcolor("$color1")) /// // colors specifically chosen to be colorblind accessible
-	   (line cumu_creditsattempted student_year, lcolor("$color2") lpattern(dash)) ///
-		(line cumu_idealcreditsearned student_year, lcolor("$color3")), ///
-	   by(pathway_entry, graphregion(fcolor(white)) imargin(medium) title("Average Cumulative Credits" "Attempted vs. Earned")) ///
+twoway (line cumu_creditsearned student_year, lcolor(pdpblue)) /// // colors specifically chosen to be colorblind accessible
+	   (line cumu_creditsattempted student_year, lcolor(pdpteal) lpattern(dash)) ///
+		(line cumu_idealcreditsearned student_year, lcolor(pdpmauve)), ///
+	   by(pathway_entry, graphregion(fcolor(white)) note("") imargin(medium) title("Average Cumulative Credits" "Attempted vs. Earned")) ///
 	   legend(label(1 "Earned") label(2 "Attempted") label(3 "On-Track")) yline(0, lcolor(black)) plotregion(margin(zero)) ytitle("Avg. Cumulative Credits") ///
 	   xtitle("Year") 
 		graph export "4_output/s4-cumu.png", replace

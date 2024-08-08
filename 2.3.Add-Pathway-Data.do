@@ -46,7 +46,14 @@
 		
 		Similarly, the studentpathwaytimeline global is used as a switch later 
 		in the code, to run the Year portion of the code instead of the Term 
-		portion of the code.
+		portion of the code. By default, we assume you are running the analysis
+		at the Year level, given this is the timeline at which most outcomes are
+		defined in the PDP AR files. But if you want to edit the code to run 
+		analyses at the Term level, you can switch the word Year to the word Term
+		here, and the subsequent data construction code will expect to find term 
+		level pathways. Note that Term level analyses will require more
+		customizations from your end, as this tool mostly constructs outcomes 
+		at the year level.
 	*/
 
 * Name of the file where you define the student pathways (once filled)

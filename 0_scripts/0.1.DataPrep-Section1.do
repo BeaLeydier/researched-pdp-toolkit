@@ -19,6 +19,24 @@ set more off
 
 * INSTRUCTIONS: Define machine-specific file path 
 
+	/* Note : In order to define your own file path, enter your machine 
+		username where it says "INSERT-MACHINE-USERNAME" and enter the file 
+		path of your local toolkit folder where it says "INSERT MACHINE SPECIFIC
+		FILEPATH". 
+		
+		If you do not know what is your machine username, you can run the 
+		following command into Stata:
+			dis "`c(username)'"
+			
+		What is displayed in response is your machine username. To see all the
+		other computer and system parameters stored by Stata, you can run
+			creturn list 
+			
+		For more details on how the following chunk of code works (in particular
+		the if conditions and the global), see the extensive comment in the
+		dofile 0.Set-Up.do.
+	*/
+	
 if c(username)=="bl517" {
 	global root "C:/Users/bl517/Documents/Github/researched-pdp-toolkit"
 }
@@ -251,7 +269,7 @@ if fileexists("$root/2_data-toolkit/$pathwaylabelsfile") {
 	restore		
 } 
 else {
-	dis as err "Please follow instructins in 2.2.Create-Pathway-Labeling-Template.do to label the pathways/programs of study in your PDP data. Change the appropriate file name to your filled pathway labels template file in the 1.Define-Parameters dofile."
+	dis as err "Please follow instructins in 2.2.Create-Pathway-Labeling-Template.do to label the pathways/programs of study in your PDP data. Change the appropriate file name to your filled pathway labels template file in the 2.3.Add-Pathway-Data dofile."
 }
 
 * Merge back with the main datasets to add the label columns for both program of study vars

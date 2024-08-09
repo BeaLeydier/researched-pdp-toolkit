@@ -6,9 +6,11 @@
 # EXCEPT if it is an .md file (for the readmes and other documentations)
 !*data*/*.md
 
-# EXCEPT the two example 
+# EXCEPT the example templates
 !2_data-toolkit/pathway-entry-term.png 
 !2_data-toolkit/pathway-entry-year.png 
 !2_data-toolkit/pathway-label.png 
-StepByStepGuide.pptx
+
+# Ignore Mac specific files
 .DS_Store
+*.stswp

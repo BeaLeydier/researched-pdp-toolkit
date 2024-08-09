@@ -17,6 +17,6 @@
 		asterix in front of it.
 	*/
 
-global institutiontype "2year"
+*global institutiontype "2year"
 global institutiontype "4year"
 
